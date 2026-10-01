@@ -1,0 +1,15 @@
+{
+	"schemaVersion": 1,
+	"id": "airjump-gametest",
+	"version": "0.0.0",
+	"name": "airjump game tests",
+	"environment": "client",
+	"entrypoints": {
+		"fabric-client-gametest": [
+			"com.urntt.airjump.gametest.AirJumpClientGameTest"
+		]
+	},
+	"depends": {
+		"airjump": "*"
+	}
+}

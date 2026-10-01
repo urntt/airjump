@@ -14,7 +14,7 @@ These decisions are settled. Do not deviate from them without the user's explici
 
 ### Minecraft and toolchain
 
-- Development started on Minecraft 26.3 with Java 25. `gradle.properties` is the single source of truth for the mod, Minecraft, Fabric Loader, Loom, Fabric API, and Java versions. `build.gradle`, `fabric.mod.json`, the mixin config, and the CI workflows read them from there; do not restate them elsewhere.
+- Development started on Minecraft 26.3 with Java 25. `gradle.properties` is the single source of truth for the mod, Minecraft, Fabric Loader, Loom, Fabric API, and Java versions. `build.gradle`, `fabric.mod.json`, and the CI workflows read them from there; do not restate them elsewhere.
 - Follow the latest official Fabric template ([FabricMC/fabric-example-mod](https://github.com/FabricMC/fabric-example-mod), also available from the [template generator](https://fabricmc.net/develop/template/)): the `net.fabricmc.fabric-loom` Gradle plugin, Mojang's official names with no `mappings` dependency, and `implementation` (not `modImplementation`) for dependencies. Do not use Yarn.
 - Pin `loom_version` to a release version instead of the template's `-SNAPSHOT`, so builds are reproducible.
 - Target only the latest stable (release) Minecraft version. Updates, fixes, and new features are always developed against it. Snapshots, pre-releases, and release candidates are not supported targets.
@@ -65,7 +65,7 @@ The mod version itself follows [Semantic Versioning](https://semver.org/); the `
 
 ### Testing
 
-- The client game tests in `src/gametest` start Minecraft and check the air jump behavior. Keep them passing and extend them when behavior changes.
+- The client game tests in `src/gametest` start Minecraft and check the default modifier key binding, and, by measuring how high the player gets, that air jumps need the modifier key, are not limited to one, and are not repeated by holding the jump key. Keep them passing and extend them when behavior changes.
 - After porting to a new Minecraft version, run the client game tests. A successful build does not prove that the mod still has the intended effect.
 - `README.md` describes how to run them, including on a headless machine.
 

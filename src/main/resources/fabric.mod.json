@@ -1,0 +1,29 @@
+{
+	"schemaVersion": 1,
+	"id": "airjump",
+	"version": "${version}",
+	"name": "airjump",
+	"description": "Lets the local player jump in mid-air.",
+	"authors": [
+		"urntt"
+	],
+	"contact": {
+		"homepage": "https://github.com/urntt/airjump",
+		"sources": "https://github.com/urntt/airjump",
+		"issues": "https://github.com/urntt/airjump/issues"
+	},
+	"license": "MIT",
+	"icon": "assets/airjump/icon.png",
+	"environment": "client",
+	"entrypoints": {
+		"client": [
+			"com.urntt.airjump.AirJumpClient"
+		]
+	},
+	"depends": {
+		"fabricloader": ">=${loader_version}",
+		"minecraft": "~${minecraft_version}",
+		"java": ">=${java_version}",
+		"fabric-api": ">=${fabric_api_version}"
+	}
+}

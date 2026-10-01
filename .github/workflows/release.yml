@@ -1,0 +1,77 @@
+# Publish a GitHub Release for the project version from build.gradle (for
+# example 1.0.0+26.3), using its section in CHANGELOG.md as release notes.
+#
+# Trigger it either by pushing the tag "v<version>", or by running it manually
+# on a branch, which creates that tag on the branch's latest commit.
+
+name: release
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v6
+      - name: validate gradle wrapper
+        uses: gradle/actions/wrapper-validation@v6
+      - name: read java version
+        id: java
+        run: echo "version=$(sed -n 's/^java_version=//p' gradle.properties)" >> "$GITHUB_OUTPUT"
+      - name: setup jdk
+        uses: actions/setup-java@v5
+        with:
+          java-version: ${{ steps.java.outputs.version }}
+          distribution: 'microsoft'
+      - name: make gradle wrapper executable
+        run: chmod +x ./gradlew
+      - name: build
+        run: ./gradlew build
+      - name: prepare release
+        id: release
+        env:
+          EVENT: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          jars=$(find build/libs -name 'airjump-*.jar' ! -name '*-sources.jar')
+          if [ -z "$jars" ] || [ "$(printf '%s\n' "$jars" | wc -l)" -ne 1 ]; then
+            echo "::error::Expected exactly one mod jar in build/libs, found: $jars"
+            exit 1
+          fi
+          jar="$jars"
+          version=$(basename "$jar" .jar)
+          version="${version#airjump-}"
+          tag="v${version}"
+          if [ "$EVENT" = "push" ] && [ "$REF_NAME" != "$tag" ]; then
+            echo "::error::Tag $REF_NAME does not match the project version; expected $tag"
+            exit 1
+          fi
+          awk -v heading="## [${version}]" '
+            index($0, "## [") == 1 { if (found) exit; found = (index($0, heading) == 1); next }
+            found { print }
+          ' CHANGELOG.md > release-notes.md
+          if [ ! -s release-notes.md ]; then
+            echo "::error::CHANGELOG.md has no section for $version"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "jar=$jar" >> "$GITHUB_OUTPUT"
+      - name: publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.release.outputs.version }}
+          TAG: ${{ steps.release.outputs.tag }}
+          JAR: ${{ steps.release.outputs.jar }}
+        run: >
+          gh release create "$TAG" "$JAR"
+          --target "$GITHUB_SHA"
+          --title "airjump $VERSION"
+          --notes-file release-notes.md

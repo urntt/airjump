@@ -1,0 +1,45 @@
+# Automatically build the project and run the client game tests for every push
+# and submitted pull request. This can help catch issues that only occur on
+# certain platforms or Java versions, and provides a first line of defence
+# against bad commits.
+
+name: build
+on: [pull_request, push]
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v6
+      - name: validate gradle wrapper
+        uses: gradle/actions/wrapper-validation@v6
+      - name: read java version
+        id: java
+        run: echo "version=$(sed -n 's/^java_version=//p' gradle.properties)" >> "$GITHUB_OUTPUT"
+      - name: setup jdk
+        uses: actions/setup-java@v5
+        with:
+          java-version: ${{ steps.java.outputs.version }}
+          distribution: 'microsoft'
+      - name: make gradle wrapper executable
+        run: chmod +x ./gradlew
+      - name: build
+        run: ./gradlew build
+      - name: capture build artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: Artifacts
+          path: build/libs/
+      # Xvfb offers no sRGB-capable OpenGL visuals, so the game falls back to
+      # its Vulkan backend, rendered in software by Mesa's lavapipe driver.
+      - name: install headless rendering
+        run: sudo apt-get update && sudo apt-get install -y xvfb mesa-vulkan-drivers
+      - name: run client game tests
+        run: xvfb-run -a -s "-screen 0 1920x1080x24" ./gradlew runClientGameTest
+      - name: capture client game test screenshots
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: Client game test screenshots
+          path: build/run/clientGameTest/screenshots/
