@@ -7,9 +7,12 @@ import java.util.function.BooleanSupplier;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
+import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Options;
 import net.minecraft.client.gui.screens.options.controls.KeyBindsScreen;
+import net.minecraft.client.input.KeyEvent;
+import org.lwjgl.sdl.SDLKeyboard;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,7 +22,10 @@ public final class AirJumpClientGameTest implements FabricClientGameTest {
 
 	/** Upper bound on the ticks a single jump sequence may take before the test gives up. */
 	private static final int MAX_JUMP_TICKS = 200;
-	/** Ticks the jump key is held without being released, long enough for vanilla to jump more than once. */
+	/**
+	 * Ticks the jump key is held without being released, long enough for vanilla to jump more than once. A key repeat
+	 * event is sent on each of them.
+	 */
 	private static final int HOLD_TICKS = 40;
 	/** Air jump presses in the sequence that checks the number of air jumps is not limited. */
 	private static final int CONSECUTIVE_AIR_JUMPS = 3;
@@ -49,7 +55,7 @@ public final class AirJumpClientGameTest implements FabricClientGameTest {
 					jump(context, modifierKey, 1), 2);
 			checkJumps("pressing jump " + CONSECUTIVE_AIR_JUMPS + " times in mid-air with the modifier key held",
 					jumpHeight, jump(context, modifierKey, CONSECUTIVE_AIR_JUMPS), CONSECUTIVE_AIR_JUMPS + 1);
-			checkJumps("holding jump with the modifier key held", jumpHeight,
+			checkJumps("holding jump with the modifier key held while the key repeats", jumpHeight,
 					holdJump(context, modifierKey), 1);
 		}
 
@@ -96,8 +102,9 @@ public final class AirJumpClientGameTest implements FabricClientGameTest {
 	}
 
 	/**
-	 * Holds the jump key for {@link #HOLD_TICKS} ticks without releasing it, with the modifier key held. Returns the
-	 * highest point reached above the starting position.
+	 * Holds the jump key for {@link #HOLD_TICKS} ticks without releasing it, with the modifier key held, and sends the
+	 * key repeat events the operating system sends for a held key. Returns the highest point reached above the
+	 * starting position.
 	 */
 	private static double holdJump(final ClientGameTestContext context, final KeyMapping modifierKey) {
 		context.waitFor(client -> client.player.onGround());
@@ -105,6 +112,7 @@ public final class AirJumpClientGameTest implements FabricClientGameTest {
 		context.getInput().holdKey(modifierKey);
 		context.getInput().holdKey(options -> options.keyJump);
 		for (int tick = 0; tick < HOLD_TICKS; tick++) {
+			repeatJumpKey(context);
 			tracker.tick();
 		}
 
@@ -112,6 +120,15 @@ public final class AirJumpClientGameTest implements FabricClientGameTest {
 		tracker.tickUntil(() -> context.computeOnClient(client -> client.player.onGround()));
 		context.getInput().releaseKey(modifierKey);
 		return tracker.height();
+	}
+
+	/** Sends a key repeat event for the jump key the way the game receives one from SDL. */
+	private static void repeatJumpKey(final ClientGameTestContext context) {
+		context.runOnClient(client -> {
+			int scancode = KeyMappingHelper.getBoundKeyOf(client.options.keyJump).getValue();
+			KeyEvent event = new KeyEvent(scancode, SDLKeyboard.SDL_GetKeyFromScancode(scancode, (short) 0, false), 0);
+			client.keyboardHandler.keyPress(client.getWindow().handle(), InputConstants.REPEAT, event);
+		});
 	}
 
 	/**
@@ -145,7 +162,10 @@ public final class AirJumpClientGameTest implements FabricClientGameTest {
 			this.maxY = this.startY;
 		}
 
-		/** Holds the jump key for exactly one tick, which is how vanilla and the mod see a press. */
+		/**
+		 * Presses the jump key and holds it for one tick. The mod reacts to the key press itself, and vanilla sees the
+		 * key held for a tick, so a press on the ground jumps as usual.
+		 */
 		void pressJump() {
 			this.context.getInput().holdKey(options -> options.keyJump);
 			this.tick();

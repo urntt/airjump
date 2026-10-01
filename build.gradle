@@ -58,6 +58,14 @@ processResources {
 	}
 }
 
+processClientResources {
+	inputs.properties resourceProperties
+
+	filesMatching("*.mixins.json") {
+		expand resourceProperties
+	}
+}
+
 tasks.withType(JavaCompile).configureEach {
 	it.options.release = javaVersion
 }

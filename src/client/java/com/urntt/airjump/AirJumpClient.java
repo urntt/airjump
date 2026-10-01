@@ -2,60 +2,48 @@ package com.urntt.airjump;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.input.KeyEvent;
 import net.minecraft.resources.Identifier;
 
 public final class AirJumpClient implements ClientModInitializer {
 	public static final String MOD_ID = "airjump";
 	public static final String MODIFIER_KEY_NAME = "key.airjump.modifier";
 
-	private KeyMapping modifierKey;
-
-	/** Whether the jump key was down at the start of the previous client tick. */
-	private boolean wasJumpKeyDown;
+	private static KeyMapping modifierKey;
 
 	@Override
 	public void onInitializeClient() {
 		KeyMapping.Category category = KeyMapping.Category.register(Identifier.fromNamespaceAndPath(MOD_ID, "general"));
-		this.modifierKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(MODIFIER_KEY_NAME, InputConstants.KEY_R, category));
-
-		ClientTickEvents.START_CLIENT_TICK.register(this::onStartClientTick);
+		modifierKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(MODIFIER_KEY_NAME, InputConstants.KEY_R, category));
 	}
 
 	/**
-	 * Performs an air jump when the jump key goes down while the modifier key is held and the player is in mid-air.
-	 *
-	 * <p>Like vanilla's own jump handling, a press is the jump key being up at one tick and down at the next, so
-	 * holding the jump key never repeats an air jump. This runs before the player's tick, so {@code onGround()} still
-	 * describes the position the press was made in: a press on the ground is left to vanilla's jump and does not also
-	 * trigger an air jump once the player has left the ground.
+	 * Handles a keyboard event before vanilla does. When the jump key is pressed while the modifier key is held, no
+	 * screen is open and the player is off the ground, the player jumps right away. Key repeats and releases are
+	 * ignored, so holding the jump key performs at most one air jump.
 	 */
-	private void onStartClientTick(final Minecraft client) {
-		boolean jumpKeyDown = client.options.keyJump.isDown();
-		boolean jumpPressed = jumpKeyDown && !this.wasJumpKeyDown;
-		this.wasJumpKeyDown = jumpKeyDown;
-
-		LocalPlayer player = client.player;
-		if (jumpPressed && this.modifierKey.isDown() && player != null && canAirJump(player)) {
-			player.jumpFromGround();
+	public static void handleKeyPress(final Minecraft client, final int action, final KeyEvent event) {
+		if (client.player == null) {
+			return;
 		}
-	}
 
-	/**
-	 * Whether the player is in mid-air. Air jumps are left out wherever vanilla already gives the jump key a
-	 * meaning: on the ground, in water or lava, on ladders and other climbable blocks, while flying, while gliding with
-	 * an elytra, and while riding.
-	 */
-	private static boolean canAirJump(final LocalPlayer player) {
-		return !player.onGround()
-				&& !player.isInLiquid()
-				&& !player.onClimbable()
-				&& !player.getAbilities().flying
-				&& !player.isFallFlying()
-				&& !player.isPassenger();
+		if (client.gui.screen() != null) {
+			return;
+		}
+
+		if (client.player.onGround()) {
+			return;
+		}
+
+		if (action != InputConstants.PRESS) {
+			return;
+		}
+
+		if (client.options.keyJump.matches(event) && modifierKey.isDown()) {
+			client.player.jumpFromGround();
+		}
 	}
 }

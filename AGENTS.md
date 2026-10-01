@@ -14,7 +14,7 @@ These decisions are settled. Do not deviate from them without the user's explici
 
 ### Minecraft and toolchain
 
-- Development started on Minecraft 26.3 with Java 25. `gradle.properties` is the single source of truth for the mod, Minecraft, Fabric Loader, Loom, Fabric API, and Java versions. `build.gradle`, `fabric.mod.json`, and the CI workflows read them from there; do not restate them elsewhere.
+- Development started on Minecraft 26.3 with Java 25. `gradle.properties` is the single source of truth for the mod, Minecraft, Fabric Loader, Loom, Fabric API, and Java versions. `build.gradle`, `fabric.mod.json`, the mixin config, and the CI workflows read them from there; do not restate them elsewhere.
 - Follow the latest official Fabric template ([FabricMC/fabric-example-mod](https://github.com/FabricMC/fabric-example-mod), also available from the [template generator](https://fabricmc.net/develop/template/)): the `net.fabricmc.fabric-loom` Gradle plugin, Mojang's official names with no `mappings` dependency, and `implementation` (not `modImplementation`) for dependencies. Do not use Yarn.
 - Pin `loom_version` to a release version instead of the template's `-SNAPSHOT`, so builds are reproducible.
 - Target only the latest stable (release) Minecraft version. Updates, fixes, and new features are always developed against it. Snapshots, pre-releases, and release candidates are not supported targets.
@@ -43,8 +43,11 @@ The mod version itself follows [Semantic Versioning](https://semver.org/); the `
 - Client-only: `fabric.mod.json` declares `"environment": "client"`. There is no server-side component and no networking.
 - The mod only adds air jumps. Other movement features are out of scope; in particular, removing the jump cooldown belongs to nojumpdelay, and the mod must not change fall damage or add flight.
 - Only the local player (`LocalPlayer`) is affected. Every other entity, including other players and mobs simulated on the client, stays vanilla.
-- The behavior follows the legacy mod: while the **Air Jump Modifier** key (default `R`) is held, each new press of the jump key while the player is in mid-air performs one vanilla jump (`LivingEntity.jumpFromGround()`), so jump boost and sprint jumping work as usual. The number of air jumps is unlimited. Holding the jump key does not repeat air jumps, and presses made while a screen is open do not count.
-- Air jumps only happen in mid-air. They do not happen on the ground (vanilla jumps there), in water or lava, while climbing, while flying, while gliding with an elytra, or while riding.
+- The air jump behaves exactly like the legacy mod's. Do not change it, for example by adding conditions or detecting presses differently, without the user's explicit approval:
+  - Every keyboard event is handled before vanilla processes it. When the event is a press of the jump key (not a key repeat or release), no screen is open, the player is not on the ground, and the **Air Jump Modifier** key (default `R`) is held, the player immediately performs one vanilla jump (`LivingEntity.jumpFromGround()`), so jump boost and sprint jumping work as usual.
+  - The number of air jumps is unlimited. Holding the jump key does not repeat air jumps.
+  - There are no other conditions: water, lava, climbing, flying, gliding with an elytra, and riding do not prevent air jumps.
+  - Only keyboard events are handled, so a jump key bound to a mouse button does not trigger air jumps.
 - There is no toggle key and no configuration file. Holding the modifier key is the only control, and unbinding it disables air jumps. Vanilla saves the key binding in `options.txt`.
 
 ### Localization
@@ -61,11 +64,11 @@ The mod version itself follows [Semantic Versioning](https://semver.org/); the `
 
 - Language: Java only.
 - Source sets: `src/main` holds only `fabric.mod.json` and the icon. All code and client resources live in `src/client`, and the client game tests live in `src/gametest`.
-- Prefer Fabric API events over mixins. If a mixin becomes necessary, prefer the MixinExtras injectors bundled with Fabric Loader (for example `@ModifyExpressionValue` and `@WrapOperation`) over `@Redirect` and `@Overwrite`, to stay compatible with other mods and keep porting work small.
+- Mixins: Fabric API has no event for in-game key presses, so, like the legacy mod, `KeyboardHandlerMixin` injects at the head of `KeyboardHandler.keyPress` to see each keyboard event. Prefer Fabric API events over new mixins. If another mixin becomes necessary, prefer the MixinExtras injectors bundled with Fabric Loader (for example `@ModifyExpressionValue` and `@WrapOperation`) over `@Redirect` and `@Overwrite`, to stay compatible with other mods and keep porting work small.
 
 ### Testing
 
-- The client game tests in `src/gametest` start Minecraft and check the default modifier key binding, and, by measuring how high the player gets, that air jumps need the modifier key, are not limited to one, and are not repeated by holding the jump key. Keep them passing and extend them when behavior changes.
+- The client game tests in `src/gametest` start Minecraft and check the default modifier key binding, and, by measuring how high the player gets, that air jumps need the modifier key, are not limited to one, and are not repeated by key repeat events while the jump key is held. Keep them passing and extend them when behavior changes.
 - After porting to a new Minecraft version, run the client game tests. A successful build does not prove that the mod still has the intended effect.
 - `README.md` describes how to run them, including on a headless machine.
 

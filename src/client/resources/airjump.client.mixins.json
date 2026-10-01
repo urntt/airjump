@@ -1,0 +1,14 @@
+{
+	"required": true,
+	"package": "com.urntt.airjump.mixin",
+	"compatibilityLevel": "JAVA_${java_version}",
+	"client": [
+		"KeyboardHandlerMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	},
+	"overwrites": {
+		"requireAnnotations": true
+	}
+}

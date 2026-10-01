@@ -8,6 +8,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
-- Jump in mid-air by pressing the jump key while holding the Air Jump Modifier key, bound to `R` by default. Air jumps are unlimited, each press performs one, and holding the jump key does not repeat them.
-- Keep the vanilla behavior of the jump key in water or lava, while climbing, flying, gliding with an elytra, and riding.
+- Jump in mid-air by pressing the jump key while holding the Air Jump Modifier key, bound to `R` by default. Air jumps are unlimited, each key press performs one, and holding the jump key does not repeat them.
 - Add English and Simplified Chinese translations.

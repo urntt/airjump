@@ -16,9 +16,9 @@ This mod changes player movement. Servers that run anti-cheat systems may detect
 
 ## Usage
 
-- While holding **Air Jump Modifier** (`R` by default), press the jump key in mid-air to jump again. Each press is one air jump; holding the jump key down does not repeat it.
+- While holding **Air Jump Modifier** (`R` by default), press the jump key while you are off the ground to jump again right away. Each press is one air jump; holding the jump key down does not repeat it.
 - An air jump is a normal vanilla jump, so Jump Boost and sprint jumping apply as usual.
-- Air jumps only work in mid-air. In water or lava, on ladders and other climbable blocks, while flying, while gliding with an elytra, and while riding, the jump key keeps its vanilla behavior.
+- Air jumps react to the jump key on the keyboard. If the jump key is bound to a mouse button, air jumps do not work.
 - Air jumps do not reset fall damage. Every block you fall counts toward the damage you take when you land, including the distance you fell before each air jump.
 
 To change the modifier key, open **Options → Controls → Key Binds** and look for the **airjump** category. Unbinding the key turns air jumps off.
