@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [1.1.0+26.3] - 2026-10-02
+
 ### Added
 
 - Add a configuration screen built from vanilla widgets, with a setting for whether air jumps are enabled, separate defaults for singleplayer worlds and allowed servers, and options to reset to the default on world exit or game exit. Settings are saved to `config/airjump.json`.
