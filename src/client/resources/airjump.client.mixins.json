@@ -3,7 +3,8 @@
 	"package": "com.urntt.airjump.mixin",
 	"compatibilityLevel": "JAVA_${java_version}",
 	"client": [
-		"KeyboardHandlerMixin"
+		"KeyboardHandlerMixin",
+		"MouseHandlerMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

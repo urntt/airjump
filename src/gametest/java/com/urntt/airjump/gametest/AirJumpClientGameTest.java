@@ -29,6 +29,8 @@ public final class AirJumpClientGameTest implements FabricClientGameTest {
 	private static final int HOLD_TICKS = 40;
 	/** Air jump presses in the sequence that checks the number of air jumps is not limited. */
 	private static final int CONSECUTIVE_AIR_JUMPS = 3;
+	/** Mouse button the jump key is bound to while checking air jumps from mouse button events. */
+	private static final String MOUSE_JUMP_KEY = "key.mouse.4";
 
 	@Override
 	public void runTest(final ClientGameTestContext context) {
@@ -57,6 +59,11 @@ public final class AirJumpClientGameTest implements FabricClientGameTest {
 					jumpHeight, jump(context, modifierKey, CONSECUTIVE_AIR_JUMPS), CONSECUTIVE_AIR_JUMPS + 1);
 			checkJumps("holding jump with the modifier key held while the key repeats", jumpHeight,
 					holdJump(context, modifierKey), 1);
+
+			bindJumpKey(context, InputConstants.getKey(MOUSE_JUMP_KEY));
+			checkJumps("pressing jump bound to a mouse button in mid-air with the modifier key held", jumpHeight,
+					jump(context, modifierKey, 1), 2);
+			bindJumpKey(context, null);
 		}
 
 		screenshotKeyBinds(context);
@@ -120,6 +127,16 @@ public final class AirJumpClientGameTest implements FabricClientGameTest {
 		tracker.tickUntil(() -> context.computeOnClient(client -> client.player.onGround()));
 		context.getInput().releaseKey(modifierKey);
 		return tracker.height();
+	}
+
+	/**
+	 * Binds the jump key to {@code key}, or back to its default when {@code key} is {@code null}.
+	 */
+	private static void bindJumpKey(final ClientGameTestContext context, final InputConstants.Key key) {
+		context.runOnClient(client -> {
+			client.options.keyJump.setKey(key != null ? key : client.options.keyJump.getDefaultKey());
+			KeyMapping.resetMapping();
+		});
 	}
 
 	/** Sends a key repeat event for the jump key the way the game receives one from SDL. */

@@ -47,7 +47,7 @@ The mod version itself follows [Semantic Versioning](https://semver.org/); the `
   - Every keyboard event is handled before vanilla processes it. When the event is a press of the jump key (not a key repeat or release), no screen is open, the player is not on the ground, and the **Air Jump Modifier** key (default `R`) is held, the player immediately performs one vanilla jump (`LivingEntity.jumpFromGround()`), so jump boost and sprint jumping work as usual.
   - The number of air jumps is unlimited. Holding the jump key does not repeat air jumps.
   - There are no other conditions: water, lava, climbing, flying, gliding with an elytra, and riding do not prevent air jumps.
-  - Only keyboard events are handled, so a jump key bound to a mouse button does not trigger air jumps.
+  - Mouse button events are handled the same way, so a jump key bound to a mouse button triggers air jumps too. The legacy mod only handled keyboard events; the user asked for this extension. Mouse buttons send no repeat events, so each press counts.
 - There is no toggle key and no configuration file. Holding the modifier key is the only control, and unbinding it disables air jumps. Vanilla saves the key binding in `options.txt`.
 
 ### Localization
@@ -64,11 +64,11 @@ The mod version itself follows [Semantic Versioning](https://semver.org/); the `
 
 - Language: Java only.
 - Source sets: `src/main` holds only `fabric.mod.json` and the icon. All code and client resources live in `src/client`, and the client game tests live in `src/gametest`.
-- Mixins: Fabric API has no event for in-game key presses, so, like the legacy mod, `KeyboardHandlerMixin` injects at the head of `KeyboardHandler.keyPress` to see each keyboard event. Prefer Fabric API events over new mixins. If another mixin becomes necessary, prefer the MixinExtras injectors bundled with Fabric Loader (for example `@ModifyExpressionValue` and `@WrapOperation`) over `@Redirect` and `@Overwrite`, to stay compatible with other mods and keep porting work small.
+- Mixins: Fabric API has no event for in-game key presses, so, like the legacy mod, `KeyboardHandlerMixin` injects at the head of `KeyboardHandler.keyPress` to see each keyboard event, and `MouseHandlerMixin` does the same at the head of `MouseHandler.onButton` for mouse buttons. Both pass the event to the same air jump logic in `AirJumpClient`. Prefer Fabric API events over new mixins. If another mixin becomes necessary, prefer the MixinExtras injectors bundled with Fabric Loader (for example `@ModifyExpressionValue` and `@WrapOperation`) over `@Redirect` and `@Overwrite`, to stay compatible with other mods and keep porting work small.
 
 ### Testing
 
-- The client game tests in `src/gametest` start Minecraft and check the default modifier key binding, and, by measuring how high the player gets, that air jumps need the modifier key, are not limited to one, and are not repeated by key repeat events while the jump key is held. Keep them passing and extend them when behavior changes.
+- The client game tests in `src/gametest` start Minecraft and check the default modifier key binding, and, by measuring how high the player gets, that air jumps need the modifier key, are not limited to one, are not repeated by key repeat events while the jump key is held, and also work with the jump key bound to a mouse button. Keep them passing and extend them when behavior changes.
 - After porting to a new Minecraft version, run the client game tests. A successful build does not prove that the mod still has the intended effect.
 - `README.md` describes how to run them, including on a headless machine.
 

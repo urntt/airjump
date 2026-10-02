@@ -18,7 +18,7 @@ This mod changes player movement. Servers that run anti-cheat systems may detect
 
 - While holding **Air Jump Modifier** (`R` by default), press the jump key while you are off the ground to jump again right away. Each press is one air jump; holding the jump key down does not repeat it.
 - An air jump is a normal vanilla jump, so Jump Boost and sprint jumping apply as usual.
-- Air jumps react to the jump key on the keyboard. If the jump key is bound to a mouse button, air jumps do not work.
+- The jump key can be bound to a keyboard key or a mouse button.
 - Air jumps do not reset fall damage. Every block you fall counts toward the damage you take when you land, including the distance you fell before each air jump.
 
 To change the modifier key, open **Options → Controls → Key Binds** and look for the **airjump** category. Unbinding the key turns air jumps off.
