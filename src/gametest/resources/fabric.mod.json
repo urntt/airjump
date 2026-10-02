@@ -6,7 +6,9 @@
 	"environment": "client",
 	"entrypoints": {
 		"fabric-client-gametest": [
-			"com.urntt.airjump.gametest.AirJumpClientGameTest"
+			"com.urntt.airjump.gametest.AirJumpLogicGameTest",
+			"com.urntt.airjump.gametest.AirJumpClientGameTest",
+			"com.urntt.airjump.gametest.AirJumpMultiplayerGameTest"
 		]
 	},
 	"depends": {

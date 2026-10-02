@@ -5,11 +5,13 @@ plugins {
 version = "${project.mod_version}+${project.minecraft_version}"
 
 repositories {
-	// Add repositories to retrieve artifacts from in here.
-	// You should only use this when depending on other mods because
-	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
-	// See https://docs.gradle.org/current/userguide/declaring_repositories.html
-	// for more information about repositories.
+	maven {
+		name = 'TerraformersMC'
+		url = 'https://maven.terraformersmc.com/releases/'
+		content {
+			includeGroup 'com.terraformersmc'
+		}
+	}
 }
 
 loom {
@@ -29,6 +31,8 @@ fabricApi {
 		modId = "airjump-gametest"
 		enableGameTests = false
 		enableClientGameTests = true
+		// The multiplayer game test starts a local dedicated server, which only runs once the Minecraft EULA is accepted.
+		eula = true
 	}
 }
 
@@ -37,6 +41,10 @@ dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+	// Mod Menu is optional: compile against it, and load it only in the development client.
+	clientCompileOnly "com.terraformersmc:modmenu:${project.modmenu_version}"
+	localRuntime "com.terraformersmc:modmenu:${project.modmenu_version}"
 }
 
 def javaVersion = project.java_version as int

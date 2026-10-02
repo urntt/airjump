@@ -18,6 +18,9 @@
 	"entrypoints": {
 		"client": [
 			"com.urntt.airjump.AirJumpClient"
+		],
+		"modmenu": [
+			"com.urntt.airjump.compat.ModMenuIntegration"
 		]
 	},
 	"mixins": [
@@ -31,5 +34,8 @@
 		"minecraft": "~${minecraft_version}",
 		"java": ">=${java_version}",
 		"fabric-api": ">=${fabric_api_version}"
+	},
+	"suggests": {
+		"modmenu": "*"
 	}
 }

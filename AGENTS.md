@@ -36,28 +36,38 @@ The mod version itself follows [Semantic Versioning](https://semver.org/); the `
 ### Distribution
 
 - Releases are published only as GitHub Releases. Do not publish to Modrinth, CurseForge, or any other mod platform, and do not add publishing tooling for them.
-- `README.md` must clearly warn that this is a movement modification: it may conflict with server anti-cheat systems, and using it in multiplayer may get the player set back, kicked, or banned.
+- `README.md` must clearly warn that this is a movement modification: it may conflict with server anti-cheat systems, and using it in multiplayer may get the player set back, kicked, or banned. It must also state that the mod is disabled in multiplayer by default.
 
 ### Scope and behavior
 
 - Client-only: `fabric.mod.json` declares `"environment": "client"`. There is no server-side component and no networking.
 - The mod only adds air jumps. Other movement features are out of scope; in particular, removing the jump cooldown belongs to nojumpdelay, and the mod must not change fall damage or add flight.
 - Only the local player (`LocalPlayer`) is affected. Every other entity, including other players and mobs simulated on the client, stays vanilla.
-- The air jump behaves exactly like the legacy mod's. Do not change it, for example by adding conditions or detecting presses differently, without the user's explicit approval:
-  - Every keyboard event is handled before vanilla processes it. When the event is a press of the jump key (not a key repeat or release), no screen is open, the player is not on the ground, and the **Air Jump Modifier** key (default `R`) is held, the player immediately performs one vanilla jump (`LivingEntity.jumpFromGround()`), so jump boost and sprint jumping work as usual.
+- The air jump behaves exactly like the legacy mod's, apart from the mouse support and the configuration below, which the user asked for. Do not change it, for example by adding conditions or detecting presses differently, without the user's explicit approval:
+  - Every keyboard event is handled before vanilla processes it. When the event is a press of the jump key (not a key repeat or release), no screen is open, the player is not on the ground, the **Air Jump Modifier** key (default `R`) is held, and `AirJumpController` reports the feature active, the player immediately performs one vanilla jump (`LivingEntity.jumpFromGround()`), so jump boost and sprint jumping work as usual.
   - The number of air jumps is unlimited. Holding the jump key does not repeat air jumps.
   - There are no other conditions: water, lava, climbing, flying, gliding with an elytra, and riding do not prevent air jumps.
   - Mouse button events are handled the same way, so a jump key bound to a mouse button triggers air jumps too. The legacy mod only handled keyboard events; the user asked for this extension. Mouse buttons send no repeat events, so each press counts.
-- There is no toggle key and no configuration file. Holding the modifier key is the only control, and unbinding it disables air jumps. Vanilla saves the key binding in `options.txt`.
+- Unbinding the modifier key disables air jumps. Vanilla saves the key binding in `options.txt`.
+- The configuration follows [urntt/nojumpdelay](https://github.com/urntt/nojumpdelay), and changes to one should be considered for the other:
+  - `AirJumpController` is the single owner of whether the feature is active: the toggle state is on and the current scene (singleplayer or a multiplayer server, determined on join) is allowed.
+  - The toggle state is enabled by default. A configurable key binding toggles it. It is unbound by default. Each toggle shows the new state on the action bar and saves it to the configuration file, so it persists across game restarts.
+  - Defaults depend on the scene: a singleplayer default (worlds hosted by this client, including ones opened to LAN) and a server default (servers the multiplayer mode allows). Both are on by default.
+  - Reset rules restore the scene's default when the player joins an allowed scene: "reset on world exit" for every world, and "reset on game exit" for the first allowed world after the game starts. Both are off by default. Resets happen on join so that they use the next scene's default and still work after a crash.
+  - The multiplayer mode is a hard limit: `DISABLED` (the default) rules out every server, `WHITELIST` allows only servers in the server list, and `BLACKLIST` allows every server except those in it. On a ruled-out server air jumps stay off and the toggle key only reports that the mod is disabled there. Joining another player's LAN world or a Realm counts as multiplayer.
+  - Server list entries match the connected address by host (case-insensitive, after IDN conversion, and required to be a valid domain name or IP address) and by port only when the entry specifies one.
+  - The configuration screen is built from vanilla widgets and opens through Mod Menu or a second key binding, "open settings", which is also unbound by default.
 
 ### Localization
 
-- All user-facing text, including key binding names and the key binding category, uses translation keys. Never hard-code display strings.
+- All user-facing text, including key binding names, the key binding category, action bar messages, and the configuration screen, uses translation keys. Never hard-code display strings.
 - Provide translations for `en_us` and `zh_cn`, and keep both complete whenever a translation key is added or changed.
 
 ### Dependencies
 
 - Required: Fabric Loader and Fabric API.
+- Optional: Mod Menu, declared under `suggests` in `fabric.mod.json`. The mod must load and work normally without it, so Mod Menu classes may only be referenced from the Mod Menu entrypoint.
+- Configuration is hand-written without a config library: a JSON file in the Fabric config directory, serialized with Gson (bundled with Minecraft). Any configuration screen uses vanilla widgets.
 - Do not add other dependencies without the user's explicit approval.
 
 ### Implementation
@@ -68,7 +78,8 @@ The mod version itself follows [Semantic Versioning](https://semver.org/); the `
 
 ### Testing
 
-- The client game tests in `src/gametest` start Minecraft and check the default modifier key binding, and, by measuring how high the player gets, that air jumps need the modifier key, are not limited to one, are not repeated by key repeat events while the jump key is held, and also work with the jump key bound to a mouse button. Keep them passing and extend them when behavior changes.
+- The client game tests in `src/gametest` measure air jumps by how high the player gets (`GameTestSupport`). They cover the address matching, the defaults and reset rules (`AirJumpLogicGameTest`); the default modifier key binding, air jumps (they need the modifier key, are not limited to one, are not repeated by key repeat events, and work with the jump key bound to a mouse button), the toggle key, reset on world exit and settings screens in singleplayer (`AirJumpClientGameTest`); and each multiplayer mode on a local dedicated server (`AirJumpMultiplayerGameTest`). Keep them passing and extend them when behavior changes.
+- The dedicated server needs `eula = true` in the `configureTests` block of `build.gradle`; it accepts the Minecraft EULA only for that local test server.
 - After porting to a new Minecraft version, run the client game tests. A successful build does not prove that the mod still has the intended effect.
 - `README.md` describes how to run them, including on a headless machine.
 
